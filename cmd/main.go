@@ -18,10 +18,14 @@ const (
 
 var (
 	serverHost = "https://localhost:9400/"
+	probeType = "mock-probe"
+	protocolVer = "6.1.0-SNAPSHOT"
 )
 
 func setFlags() {
 	flag.StringVar(&serverHost, "serverHost", serverHost, "host of OpsMgr")
+	flag.StringVar(&probeType, "probeType", probeType, "type of this probe")
+	flag.StringVar(&protocolVer, "protocolVersion", protocolVer, "OpsMgr protocol version")
 }
 
 func getConnConfig() *wsocket.ConnectionConfig {
@@ -42,8 +46,8 @@ func getMediationClient() (*mediation.MediationClient, error){
 	conf := getConnConfig()
 
 	//2. get turbo probe
-	protocolVer := "6.1.0-SNAPSHOT"
-	probeType := "mock-probe"
+	//protocolVer := "6.1.0-SNAPSHOT"
+	//probeType := "mock-probe"
 	probeCategory := "cloudNative"
 	infoProvider := instance.NewMockProbeInfoProvider(protocolVer, probeType, probeCategory)
 	discoveryExecutor := instance.NewMockDiscoveryExecutor("mocke discovery executor")
