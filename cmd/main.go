@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/golang/glog"
 	"turbo_probe/pkg/wsocket"
-	"turbo_probe/pkg/instance"
+	instance "turbo_probe/pkg/example"
 	"turbo_probe/pkg/probe"
 	"turbo_probe/pkg/mediation"
 )
