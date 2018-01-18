@@ -1,13 +1,13 @@
 package mediation
 
 import (
+	"fmt"
 	"github.com/golang/glog"
 	protobuf "github.com/golang/protobuf/proto"
 	"turbo_probe/pkg/proto"
-	"fmt"
 )
 
-func (m *MediationClient) handleAction(sreq *proto.MediationServerMessage)  {
+func (m *MediationClient) handleAction(sreq *proto.MediationServerMessage) {
 	msgId := sreq.GetMessageID()
 	err := m.handleActionInner(sreq)
 	if err == nil {
@@ -15,18 +15,18 @@ func (m *MediationClient) handleAction(sreq *proto.MediationServerMessage)  {
 		return
 	}
 
-	glog.Errorf("Action-%d failed: %v %v", msgId, err)
+	glog.Errorf("Action-%d failed: %v", msgId, err)
 	//send failure response
 	state := proto.ActionResponseState_FAILED
 	progress := int32(0)
 	msg := err.Error()
 	body := &proto.ActionResponse{
 		ActionResponseState: &state,
-		Progress: &progress,
+		Progress:            &progress,
 		ResponseDescription: &msg,
 	}
 
-	resp := &proto.ActionResult {
+	resp := &proto.ActionResult{
 		Response: body,
 	}
 
@@ -69,10 +69,10 @@ func (m *MediationClient) handleActionProgress(msgId int32, stop chan bool, trac
 
 	for {
 		select {
-		case <- stop:
+		case <-stop:
 			glog.V(3).Infof("Stop progress handler for action-%d", msgId)
 			return
-		case info := <- msgCh:
+		case info := <-msgCh:
 			progress := info.Response.GetProgress()
 			glog.V(4).Infof("Get action-%d progress info: %d, %v",
 				msgId, progress, info.Response.GetResponseDescription())
@@ -91,7 +91,7 @@ func (m *MediationClient) sendActionResult(msgId int32, resp *proto.ActionResult
 	}
 
 	msg := &proto.MediationClientMessage{
-		MessageID: &msgId,
+		MessageID:              &msgId,
 		MediationClientMessage: msgbody,
 	}
 
@@ -108,7 +108,7 @@ func (m *MediationClient) sendActionProgress(msgId int32, resp *proto.ActionProg
 	}
 
 	msg := &proto.MediationClientMessage{
-		MessageID: &msgId,
+		MessageID:              &msgId,
 		MediationClientMessage: msgbody,
 	}
 

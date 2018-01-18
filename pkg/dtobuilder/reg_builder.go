@@ -1,9 +1,9 @@
 package dtobuilder
 
 import (
-	"turbo_probe/pkg/proto"
-	"math"
 	"fmt"
+	"math"
+	"turbo_probe/pkg/proto"
 )
 
 func BuildAccountDefEntry(name, displayName, description, verificationRegex string,
@@ -32,7 +32,6 @@ func BuildAccountDefEntry(name, displayName, description, verificationRegex stri
 
 	return accountDefEntry
 }
-
 
 type TemplateDTOBuilder struct {
 	templateClass              *proto.EntityDTO_EntityType

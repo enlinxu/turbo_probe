@@ -8,8 +8,8 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"net/url"
-	"time"
 	"sync"
+	"time"
 )
 
 const (
@@ -45,7 +45,6 @@ func NewConnectionConfig(host, path, user, passwd string) (*ConnectionConfig, er
 		scheme = "wss"
 	}
 
-
 	u := url.URL{
 		Scheme: scheme,
 		Host:   addr.Host,
@@ -64,7 +63,7 @@ func NewConnectionConfig(host, path, user, passwd string) (*ConnectionConfig, er
 type WSconnection struct {
 	wsocket *websocket.Conn
 
-	mux sync.Mutex
+	mux    sync.Mutex
 	closed bool
 
 	// Buffered channel of outbound messages.
@@ -152,7 +151,6 @@ func (ws *WSconnection) sendPing() error {
 	return nil
 }
 
-
 func (ws *WSconnection) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
@@ -207,13 +205,11 @@ func (ws *WSconnection) PushSend(dat []byte, timeout time.Duration) error {
 	case ws.send <- dat:
 		glog.V(3).Infof("pushed dat into sending queue")
 		return nil
-	case <- timer.C:
+	case <-timer.C:
 		err := fmt.Errorf("timeout when pushing data into sending queue")
 		glog.Errorf(err.Error())
 		return err
 	}
-
-	return nil
 }
 
 func (ws *WSconnection) readPump() {
@@ -258,7 +254,7 @@ func (ws *WSconnection) Stop() {
 	ws.mux.Lock()
 	defer ws.mux.Unlock()
 
-	if(ws.closed) {
+	if ws.closed {
 		return
 	}
 

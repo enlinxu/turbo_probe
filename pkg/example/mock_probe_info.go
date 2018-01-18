@@ -1,10 +1,10 @@
 package instance
 
 import (
-	"turbo_probe/pkg/proto"
-	"turbo_probe/pkg/dtobuilder"
-	"github.com/golang/glog"
 	"fmt"
+	"github.com/golang/glog"
+	"turbo_probe/pkg/dtobuilder"
+	"turbo_probe/pkg/proto"
 )
 
 const (
@@ -14,10 +14,10 @@ const (
 )
 
 type MockProbeInfoProvider struct {
-	protocolVersion string
-	probeType string
-	probeCategory string
-	fullDiscoveryInterval int32
+	protocolVersion              string
+	probeType                    string
+	probeCategory                string
+	fullDiscoveryInterval        int32
 	incrementalDiscoveryInterval int32
 	performanceDiscoveryInterval int32
 }
@@ -25,10 +25,10 @@ type MockProbeInfoProvider struct {
 func NewMockProbeInfoProvider(ver, ptype, category string) *MockProbeInfoProvider {
 	return &MockProbeInfoProvider{
 		protocolVersion: ver,
-		probeType: ptype,
-		probeCategory: category,
+		probeType:       ptype,
+		probeCategory:   category,
 
-		fullDiscoveryInterval: int32(300),
+		fullDiscoveryInterval:        int32(300),
 		incrementalDiscoveryInterval: int32(-1),
 		performanceDiscoveryInterval: int32(-1),
 	}
@@ -44,9 +44,8 @@ func (p *MockProbeInfoProvider) GetProbeInfo() ([]*proto.ProbeInfo, error) {
 	result := []*proto.ProbeInfo{}
 
 	info := &proto.ProbeInfo{
-		ProbeType: &p.probeType,
+		ProbeType:     &p.probeType,
 		ProbeCategory: &p.probeCategory,
-
 	}
 
 	//2. account def & ID field
@@ -64,7 +63,7 @@ func (p *MockProbeInfoProvider) GetProbeInfo() ([]*proto.ProbeInfo, error) {
 	//4. Discovery intervals
 	info.FullRediscoveryIntervalSeconds = &(p.fullDiscoveryInterval)
 	info.IncrementalRediscoveryIntervalSeconds = &(p.incrementalDiscoveryInterval)
-	info.PerformanceRediscoveryIntervalSeconds =  &(p.performanceDiscoveryInterval)
+	info.PerformanceRediscoveryIntervalSeconds = &(p.performanceDiscoveryInterval)
 
 	result = append(result, info)
 	return result, nil
@@ -87,7 +86,6 @@ func (p *MockProbeInfoProvider) getAccountDefinition() []*proto.AccountDefEntry 
 	passwordAcctDefEntry := dtobuilder.BuildAccountDefEntry(Password, "Password",
 		"Password of the Kubernetes master", ".*", false, true)
 	acctDefProps = append(acctDefProps, passwordAcctDefEntry)
-
 
 	return acctDefProps
 }

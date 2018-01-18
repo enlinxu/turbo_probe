@@ -1,9 +1,9 @@
 package instance
 
 import (
-	"turbo_probe/pkg/proto"
-	"github.com/golang/glog"
 	"fmt"
+	"github.com/golang/glog"
+	"turbo_probe/pkg/proto"
 )
 
 type MockDiscoveryExecutor struct {
@@ -47,4 +47,3 @@ func (p *MockDiscoveryExecutor) DiscoverPerformance(accountValues []*proto.Accou
 	glog.Error(err.Error())
 	return nil, err
 }
-

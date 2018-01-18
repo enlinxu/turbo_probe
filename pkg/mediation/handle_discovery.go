@@ -46,7 +46,6 @@ func (m *MediationClient) handleDiscoveryInner(sreq *proto.MediationServerMessag
 		return err
 	}
 
-
 	//1. keep alive
 
 	//2. do discovery with time out
@@ -71,7 +70,7 @@ func (m *MediationClient) handleDiscovery(sreq *proto.MediationServerMessage) er
 	des := err.Error()
 
 	errDTO := &proto.ErrorDTO{
-		Severity: &level,
+		Severity:    &level,
 		Description: &des,
 	}
 
@@ -98,7 +97,7 @@ func (m *MediationClient) sendDiscoveryResponse(msgId int32, resp *proto.Discove
 	m.wsconn.PushSend(dat, defaultSendTimeOut)
 }
 
-func (m *MediationClient) handleValidation(sreq *proto.MediationServerMessage)  {
+func (m *MediationClient) handleValidation(sreq *proto.MediationServerMessage) {
 	err := m.handleValidationInner(sreq)
 	if err == nil {
 		return
@@ -108,7 +107,7 @@ func (m *MediationClient) handleValidation(sreq *proto.MediationServerMessage)  
 	des := err.Error()
 
 	errDTO := &proto.ErrorDTO{
-		Severity: &level,
+		Severity:    &level,
 		Description: &des,
 	}
 

@@ -3,8 +3,8 @@ package instance
 import (
 	"github.com/golang/glog"
 
-	"turbo_probe/pkg/proto"
 	"turbo_probe/pkg/probe"
+	"turbo_probe/pkg/proto"
 )
 
 type MockActionExecutor struct {
@@ -19,8 +19,8 @@ func NewMockActionExecutor(name string) *MockActionExecutor {
 
 //3. Action
 func (p *MockActionExecutor) ExecuteAction(actionExecutionDTO *proto.ActionExecutionDTO,
-                                              accountValues []*proto.AccountValue,
-                                              tracker probe.IActionProgressTracker) (*proto.ActionResult, error) {
+	accountValues []*proto.AccountValue,
+	tracker probe.IActionProgressTracker) (*proto.ActionResult, error) {
 	glog.Errorf("Action Execuator is not really implemented")
 
 	state := proto.ActionResponseState_SUCCEEDED
@@ -28,7 +28,7 @@ func (p *MockActionExecutor) ExecuteAction(actionExecutionDTO *proto.ActionExecu
 	msg := "success"
 	body := &proto.ActionResponse{
 		ActionResponseState: &state,
-		Progress: &progress,
+		Progress:            &progress,
 		ResponseDescription: &msg,
 	}
 

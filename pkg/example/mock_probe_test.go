@@ -1,8 +1,8 @@
 package instance
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 )
 
 func TestMockProbe_GetProbeInfo(t *testing.T) {

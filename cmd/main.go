@@ -4,21 +4,21 @@ import (
 	"flag"
 	"fmt"
 	"github.com/golang/glog"
-	"turbo_probe/pkg/wsocket"
 	instance "turbo_probe/pkg/example"
-	"turbo_probe/pkg/probe"
 	"turbo_probe/pkg/mediation"
+	"turbo_probe/pkg/probe"
+	"turbo_probe/pkg/wsocket"
 )
 
 const (
-	defaultRemoteMediationServerPath       string = "/vmturbo/remoteMediation"
-	defaultRemoteMediationServerUser   string = "vmtRemoteMediation"
-	defaultRemoteMediationServerPwd    string = "vmtRemoteMediation"
+	defaultRemoteMediationServerPath string = "/vmturbo/remoteMediation"
+	defaultRemoteMediationServerUser string = "vmtRemoteMediation"
+	defaultRemoteMediationServerPwd  string = "vmtRemoteMediation"
 )
 
 var (
-	serverHost = "https://localhost:9400/"
-	probeType = "mock-probe"
+	serverHost  = "https://localhost:9400/"
+	probeType   = "mock-probe"
 	protocolVer = "6.1.0-SNAPSHOT"
 )
 
@@ -41,7 +41,7 @@ func getConnConfig() *wsocket.ConnectionConfig {
 	return conf
 }
 
-func getMediationClient() (*mediation.MediationClient, error){
+func getMediationClient() (*mediation.MediationClient, error) {
 	//1. get websocket config
 	conf := getConnConfig()
 

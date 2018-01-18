@@ -97,8 +97,6 @@ func (m *MediationClient) ProtocolHandShake() bool {
 		glog.Errorf("protocolHandShake failed, will retry in %v seconds", du.Seconds())
 		time.Sleep(du)
 	}
-
-	return false
 }
 
 func (m *MediationClient) buildWSConnection() error {
