@@ -8,6 +8,8 @@ import (
 	"turbo_probe/pkg/mediation"
 	"turbo_probe/pkg/probe"
 	"turbo_probe/pkg/wsocket"
+	"turbo_probe/pkg/restapi"
+	"time"
 )
 
 const (
@@ -17,9 +19,13 @@ const (
 )
 
 var (
-	serverHost  = "https://localhost:9400/"
+	probeCategory = "CloudNative"
 	probeType   = "mock-probe"
 	protocolVer = "6.1.0-SNAPSHOT"
+	serverHost  = "https://localhost:9400/"
+
+	username = "administrator"
+	passwd = "a"
 )
 
 func setFlags() {
@@ -48,7 +54,7 @@ func getMediationClient() (*mediation.MediationClient, error) {
 	//2. get turbo probe
 	//protocolVer := "6.1.0-SNAPSHOT"
 	//probeType := "mock-probe"
-	probeCategory := "cloudNative"
+	//probeCategory := "cloudNative"
 	infoProvider := instance.NewMockProbeInfoProvider(protocolVer, probeType, probeCategory)
 	discoveryExecutor := instance.NewMockDiscoveryExecutor("mocke discovery executor")
 	actionExecutor := instance.NewMockActionExecutor("mock action executor")
@@ -67,6 +73,48 @@ func getMediationClient() (*mediation.MediationClient, error) {
 	return mclient, nil
 }
 
+
+
+func buildTarget(cate, ttype string) *restapi.Target {
+	target := &restapi.Target{
+		Category: cate,
+		Type: ttype,
+	}
+
+	builder := restapi.NewInputFieldsBuilder()
+	builder.With("targetIdentifier", "myId").
+			With("username", "developer").
+	        With("password", "pass")
+
+	target.InputFields = builder.Create()
+	//target.IdentifyingFields = []string{"Address"}
+
+	return target
+}
+
+func addTarget(cate, ttype string) {
+	time.Sleep(time.Second * 10)
+	//1. construct target
+	target := buildTarget(cate, ttype)
+
+	//2. construct a restapi client
+	client, err := restapi.NewRestClient(serverHost, username, passwd)
+	if err != nil {
+		glog.Errorf("Failed to create restAPI client: %v", err)
+		return
+	}
+
+	//3. add the target
+	resp, err := client.AddTarget(target)
+	if err != nil {
+		glog.Errorf("Failed to add target: %v, %v", err, resp)
+		return
+	}
+
+	glog.V(2).Infof("Add target succeded: %v", resp)
+	return
+}
+
 func main() {
 	setFlags()
 	flag.Parse()
@@ -80,6 +128,7 @@ func main() {
 		return
 	}
 
+	go addTarget(probeCategory, probeType)
 	client.Start()
 
 	return
