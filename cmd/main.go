@@ -82,7 +82,7 @@ func buildTarget(cate, ttype string) *restapi.Target {
 	}
 
 	builder := restapi.NewInputFieldsBuilder()
-	builder.With("targetIdentifier", "myId").
+	builder.With("targetIdentifier", "myTargetId").
 			With("username", "developer").
 	        With("password", "pass")
 
