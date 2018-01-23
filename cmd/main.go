@@ -32,6 +32,8 @@ func setFlags() {
 	flag.StringVar(&serverHost, "serverHost", serverHost, "host of OpsMgr")
 	flag.StringVar(&probeType, "probeType", probeType, "type of this probe")
 	flag.StringVar(&protocolVer, "protocolVersion", protocolVer, "OpsMgr protocol version")
+	flag.StringVar(&username, "turboUser", username, "OpsMgr user name")
+	flag.StringVar(&passwd, "turboPasswd", passwd, "OpsMgr user password")
 }
 
 func getConnConfig() *wsocket.ConnectionConfig {
