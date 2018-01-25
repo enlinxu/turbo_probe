@@ -10,6 +10,9 @@ import (
 	"net/url"
 	"sync"
 	"time"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 const (
@@ -259,11 +262,11 @@ func (ws *WSconnection) Stop() {
 	}
 
 	glog.V(2).Infof("Begin to stop websocket read/write pumps, and close connection.")
+	// send a close-frame before closing
 	ws.write(websocket.CloseMessage, []byte{})
 	ws.closed = true
-
-	//TODO: send a close-frame before closing
 	ws.wsocket.Close()
+	os.Exit(0)
 }
 
 func (ws *WSconnection) SetupPingPong() {
@@ -281,8 +284,27 @@ func (ws *WSconnection) SetupPingPong() {
 	ws.wsocket.SetPongHandler(h2)
 }
 
+func (ws *WSconnection) handleSignal() {
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
+
+	go func() {
+		sig := <-signalChannel
+		switch sig {
+		case os.Interrupt:
+			glog.V(1).Info("Received SIGINT signal.")
+		case syscall.SIGTERM:
+			glog.V(1).Info("Reived SIGTERM signal, closed websocket")
+		case syscall.SIGQUIT:
+			glog.V(1).Info("Reived SIGQUIT signal, closed websocket")
+		}
+		ws.Stop()
+	}()
+}
+
 func (ws *WSconnection) Start() error {
 	glog.V(2).Infof("Begin to start websocket read/write pumps.")
+	ws.handleSignal()
 	ws.SetupPingPong()
 
 	go ws.writePump()

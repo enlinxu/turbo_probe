@@ -37,7 +37,7 @@ func (m *MediationClient) handleServerRequest(dat []byte) error {
 	mrequest := &proto.MediationServerMessage{}
 
 	if err := protobuf.Unmarshal(dat, mrequest); err != nil {
-		glog.Errorf("Failed to unmarshal mediation server message: %v", dat)
+		glog.Errorf("Failed to unmarshal mediation server message: %v", string(dat))
 		return err
 	}
 
