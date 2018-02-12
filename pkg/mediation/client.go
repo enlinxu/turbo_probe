@@ -166,6 +166,7 @@ func (m *MediationClient) registerProbe() (bool, error) {
 		glog.Errorf("Failed to get probeInfo: %v", err)
 		return false, err
 	}
+	glog.V(3).Infof("Probe.Info=%++v", probeInfo)
 
 	request := &proto.ContainerInfo{
 		Probes: probeInfo,

@@ -8,11 +8,11 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"net/url"
-	"sync"
-	"time"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
+	"time"
 )
 
 const (

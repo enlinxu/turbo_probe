@@ -4,12 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"github.com/golang/glog"
+	"time"
 	instance "turbo_probe/pkg/example"
 	"turbo_probe/pkg/mediation"
 	"turbo_probe/pkg/probe"
-	"turbo_probe/pkg/wsocket"
 	"turbo_probe/pkg/restapi"
-	"time"
+	"turbo_probe/pkg/wsocket"
 )
 
 const (
@@ -19,13 +19,13 @@ const (
 )
 
 var (
-	probeCategory = "CloudNative"
-	probeType   = "mock-probe"
-	protocolVer = "6.1.0-SNAPSHOT"
-	serverHost  = "https://localhost:9400/"
+	probeCategory = "Cloud Native"
+	probeType     = "mock-probe"
+	protocolVer   = "6.1.0-SNAPSHOT"
+	serverHost    = "https://localhost:9400/"
 
 	username = "administrator"
-	passwd = "a"
+	passwd   = "a"
 )
 
 func setFlags() {
@@ -75,18 +75,16 @@ func getMediationClient() (*mediation.MediationClient, error) {
 	return mclient, nil
 }
 
-
-
 func buildTarget(cate, ttype string) *restapi.Target {
 	target := &restapi.Target{
 		Category: cate,
-		Type: ttype,
+		Type:     ttype,
 	}
 
 	builder := restapi.NewInputFieldsBuilder()
 	builder.With("targetIdentifier", "myTargetId").
-			With("username", "developer").
-	        With("password", "pass")
+		With("username", "developer").
+		With("password", "pass")
 
 	target.InputFields = builder.Create()
 	//target.IdentifyingFields = []string{"Address"}

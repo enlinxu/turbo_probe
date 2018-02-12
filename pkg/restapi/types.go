@@ -65,5 +65,3 @@ type Link struct {
 }
 
 type List struct{}
-
-

@@ -10,4 +10,3 @@ const (
 
 	defaultTimeOut = time.Duration(60 * time.Second)
 )
-

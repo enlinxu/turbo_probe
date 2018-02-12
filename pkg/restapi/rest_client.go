@@ -1,14 +1,14 @@
 package restapi
 
 import (
-	"net/url"
-	"crypto/tls"
-	"net/http"
-	"github.com/golang/glog"
-	"fmt"
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
+	"fmt"
+	"github.com/golang/glog"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 )
 
 type TurboRestClient struct {

@@ -2,8 +2,8 @@ package restapi
 
 func NewAPITarget(category, ttype string, fields []*InputField) *Target {
 	return &Target{
-		Category: category,
-		Type: ttype,
+		Category:    category,
+		Type:        ttype,
 		InputFields: fields,
 	}
 }
@@ -21,7 +21,7 @@ func NewInputFieldsBuilder() *InputFieldsBuilder {
 
 func (b *InputFieldsBuilder) With(name, value string) *InputFieldsBuilder {
 	field := &InputField{
-		Name: name,
+		Name:  name,
 		Value: value,
 	}
 
