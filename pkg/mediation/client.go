@@ -100,12 +100,19 @@ func (m *MediationClient) WaitServerRequests() {
 	m.wsconn.Start()
 
 	for {
+		//1. check whether MediationClient should be stopped
 		if m.shouldStop {
+			glog.V(1).Info("Stop waiting for server request: MediationClient should be stopped.")
+			return
+		}
+
+		//2. check whether the underlying websocket is stopped
+		if m.wsconn.IsClosed() {
 			glog.V(1).Info("Stop waiting for server request: websocket is closed.")
 			return
 		}
 
-		//1. get request from server, and handle it
+		//3. get request from server, and handle it
 		datch, err := m.wsconn.GetReceived()
 		if err != nil {
 			glog.Errorf("Stop waiting for server request: %v", err)
@@ -115,7 +122,7 @@ func (m *MediationClient) WaitServerRequests() {
 		timer := time.NewTimer(time.Second * 10)
 		select {
 		case dat := <-datch:
-			if m.shouldStop {
+			if m.wsconn.IsClosed() {
 				glog.V(1).Info("Stop waiting for server request: websocket is closed.")
 				return
 			}
