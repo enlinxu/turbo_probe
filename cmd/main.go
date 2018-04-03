@@ -20,7 +20,7 @@ const (
 
 var (
 	probeCategory = "Cloud Native"
-	probeType     = "mock-probe"
+	probeType     = "Kubernetes.mock"
 	protocolVer   = "6.1.0-SNAPSHOT"
 	serverHost    = "https://localhost:9400/"
 

@@ -62,8 +62,12 @@ func (p *MockProbeInfoProvider) GetProbeInfo() ([]*proto.ProbeInfo, error) {
 
 	//4. Discovery intervals
 	info.FullRediscoveryIntervalSeconds = &(p.fullDiscoveryInterval)
-	info.IncrementalRediscoveryIntervalSeconds = &(p.incrementalDiscoveryInterval)
-	info.PerformanceRediscoveryIntervalSeconds = &(p.performanceDiscoveryInterval)
+	if p.incrementalDiscoveryInterval > 0 {
+		info.IncrementalRediscoveryIntervalSeconds = &(p.incrementalDiscoveryInterval)
+	}
+	if p.performanceDiscoveryInterval > 0 {
+		info.PerformanceRediscoveryIntervalSeconds = &(p.performanceDiscoveryInterval)
+	}
 
 	result = append(result, info)
 	return result, nil

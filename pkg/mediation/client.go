@@ -11,6 +11,9 @@ import (
 	"time"
 
 	protobuf "github.com/golang/protobuf/proto"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 // MediationClient will glue websocket and turbo_probe
@@ -22,6 +25,8 @@ type MediationClient struct {
 	protocolVersion string
 
 	probe *probe.TurboProbe
+
+	shouldStop bool
 }
 
 func NewMediationClient(wsconf *wsocket.ConnectionConfig, probe *probe.TurboProbe) *MediationClient {
@@ -30,10 +35,12 @@ func NewMediationClient(wsconf *wsocket.ConnectionConfig, probe *probe.TurboProb
 		wsRetryDuration: defaultConnectionRetryDuration,
 		protocolVersion: probe.ProbeInfoProvider.GetProtocolVersion(),
 		probe:           probe,
+		shouldStop: false,
 	}
 }
 
 func (m *MediationClient) Start() error {
+	m.handleSignal()
 	for {
 		glog.V(2).Infof("Begin protocol hand shake ...")
 		flag := m.ProtocolHandShake()
@@ -46,11 +53,48 @@ func (m *MediationClient) Start() error {
 		glog.V(2).Infof("Begin to serve server requests ...")
 		m.WaitServerRequests()
 
+		if m.shouldStop {
+			glog.V(1).Infof("Mediation Client is stopped.")
+			break
+		}
+
 		du := m.wsRetryDuration
 		glog.Errorf("websocket is closed. Will re-connect in %v seconds.", du.Seconds())
 		time.Sleep(du)
 	}
+
+	return nil
 }
+
+func (m *MediationClient) Stop() {
+	m.shouldStop = true
+	if m.wsconn != nil {
+		m.wsconn.Stop()
+	}
+}
+
+func (m *MediationClient) handleSignal() {
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
+
+	go func() {
+		sig := <-signalChannel
+		switch sig {
+		case os.Interrupt:
+			glog.V(1).Info("Received SIGINT signal.")
+		case syscall.SIGTERM:
+			glog.V(1).Info("Reived SIGTERM signal, closed websocket")
+		case syscall.SIGQUIT:
+			glog.V(1).Info("Reived SIGQUIT signal, closed websocket")
+		}
+		m.Stop()
+		time.Sleep(time.Second*10)
+		glog.V(1).Infof("done xxx")
+		time.Sleep(time.Second*2)
+		os.Exit(0)
+	}()
+}
+
 
 func (m *MediationClient) WaitServerRequests() {
 	m.wsconn.Start()
@@ -103,9 +147,14 @@ func (m *MediationClient) buildWSConnection() error {
 
 	if m.wsconn != nil {
 		m.wsconn.Stop()
+		m.wsconn = nil
 	}
 
 	for {
+		if m.shouldStop {
+			return fmt.Errorf("Stopped")
+		}
+
 		wsconn := wsocket.NewConnection(m.wsConfig)
 		if wsconn == nil {
 			glog.Errorf("Failed to build websocket connection: %++v", m.wsConfig)

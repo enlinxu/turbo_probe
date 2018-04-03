@@ -8,10 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"net/url"
-	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -64,16 +61,20 @@ func NewConnectionConfig(host, path, user, passwd string) (*ConnectionConfig, er
 }
 
 type WSconnection struct {
-	wsocket *websocket.Conn
+	wsocket    *websocket.Conn
 
-	mux    sync.Mutex
-	closed bool
+	mux        sync.Mutex
+	closed     bool
+	stop       chan struct{}
+
+	//indicate whether the Write Pump has started
+	writeStart bool
 
 	// Buffered channel of outbound messages.
-	send chan []byte
+	send       chan []byte
 
 	// Buffered channel of inbound messages.
-	received chan []byte
+	received   chan []byte
 }
 
 func getAuthHeader(user, password string) http.Header {
@@ -108,6 +109,8 @@ func NewConnection(conf *ConnectionConfig) *WSconnection {
 	result := &WSconnection{
 		wsocket:  c,
 		closed:   false,
+		stop: make(chan struct{}),
+		writeStart: false,
 		send:     make(chan []byte),
 		received: make(chan []byte),
 	}
@@ -155,22 +158,22 @@ func (ws *WSconnection) sendPing() error {
 }
 
 func (ws *WSconnection) writePump() {
+	ws.writeStart = true
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
-		glog.V(2).Infof("websocket writePump stops")
+		glog.V(1).Infof("websocket writePump stops")
 		ticker.Stop()
 		close(ws.send)
 		ws.Stop()
+		ws.write(websocket.CloseMessage, []byte{})
 	}()
 	ws.sendPing()
 
 	for {
-		if ws.closed {
-			glog.V(2).Infof("websocket should be closed, stop writing pump.")
-			return
-		}
-
 		select {
+		case <- ws.stop:
+			glog.V(1).Infof("Write pump is stopped.")
+			return
 		case message, ok := <-ws.send:
 			if !ok {
 				glog.Errorf("sending channel is closed or error")
@@ -224,21 +227,20 @@ func (ws *WSconnection) readPump() {
 
 	ws.wsocket.SetReadLimit(maxMessageSize)
 	for {
-		if ws.closed {
-			glog.V(2).Infof("websocket should be closed, stop reading pump.")
-			return
-		}
-
 		glog.V(2).Infof("Begin to wait for next websocket msg.")
 		mt, msg, err := ws.wsocket.ReadMessage()
 		if err != nil {
 			glog.Errorf("stop websocket reader because of read error: %v", err)
 			return
 		}
-
 		glog.V(2).Infof("Got msg(type=%d) from websocket, begin to deliver it", mt)
+
+
 		timer := time.NewTimer(deliverWait)
 		select {
+		case <- ws.stop:
+			glog.V(1).Infof("Read pump is stoppped.")
+			return
 		case ws.received <- msg:
 			glog.V(2).Infof("msg is received, and sent to receiving queue.")
 		case <-timer.C:
@@ -249,6 +251,8 @@ func (ws *WSconnection) readPump() {
 }
 
 func (ws *WSconnection) IsClosed() bool {
+	ws.mux.Lock()
+	defer ws.mux.Unlock()
 	return ws.closed
 }
 
@@ -262,11 +266,14 @@ func (ws *WSconnection) Stop() {
 	}
 
 	glog.V(2).Infof("Begin to stop websocket read/write pumps, and close connection.")
-	// send a close-frame before closing
-	ws.write(websocket.CloseMessage, []byte{})
 	ws.closed = true
-	ws.wsocket.Close()
-	os.Exit(0)
+	close(ws.stop)
+
+	if !ws.writeStart {
+		// send a close-frame before closing
+		ws.write(websocket.CloseMessage, []byte{})
+		ws.wsocket.Close()
+	}
 }
 
 func (ws *WSconnection) SetupPingPong() {
@@ -284,27 +291,8 @@ func (ws *WSconnection) SetupPingPong() {
 	ws.wsocket.SetPongHandler(h2)
 }
 
-func (ws *WSconnection) handleSignal() {
-	signalChannel := make(chan os.Signal, 1)
-	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
-
-	go func() {
-		sig := <-signalChannel
-		switch sig {
-		case os.Interrupt:
-			glog.V(1).Info("Received SIGINT signal.")
-		case syscall.SIGTERM:
-			glog.V(1).Info("Reived SIGTERM signal, closed websocket")
-		case syscall.SIGQUIT:
-			glog.V(1).Info("Reived SIGQUIT signal, closed websocket")
-		}
-		ws.Stop()
-	}()
-}
-
 func (ws *WSconnection) Start() error {
 	glog.V(2).Infof("Begin to start websocket read/write pumps.")
-	ws.handleSignal()
 	ws.SetupPingPong()
 
 	go ws.writePump()
