@@ -50,13 +50,13 @@ func (m *MediationClient) Start() error {
 			return err
 		}
 
-		glog.V(2).Infof("Begin to serve server requests ...")
-		m.WaitServerRequests()
-
 		if m.shouldStop {
 			glog.V(1).Infof("Mediation Client is stopped.")
 			break
 		}
+
+		glog.V(2).Infof("Begin to serve server requests ...")
+		m.WaitServerRequests()
 
 		du := m.wsRetryDuration
 		glog.Errorf("websocket is closed. Will re-connect in %v seconds.", du.Seconds())
@@ -89,8 +89,6 @@ func (m *MediationClient) handleSignal() {
 		}
 		m.Stop()
 		time.Sleep(time.Second*10)
-		glog.V(1).Infof("done xxx")
-		time.Sleep(time.Second*2)
 		os.Exit(0)
 	}()
 }
@@ -138,6 +136,10 @@ func (m *MediationClient) ProtocolHandShake() bool {
 	for {
 		glog.V(2).Infof("begin to connect to server, and do protocol hand shake.")
 		m.buildWSConnection()
+
+		if m.shouldStop {
+			return false
+		}
 
 		glog.V(2).Infof("begin to do protocol hand shake")
 		flag, err := m.doProtocolHandShake()
