@@ -148,8 +148,14 @@ func (ws *WSconnection) Stop() {
 func (ws *WSconnection) SetupPingPong() {
 	h := func(message string) error {
 		glog.V(3).Infof("Recevied ping msg")
-		ws.wsocket.WriteControl(websocket.PongMessage, []byte(message), time.Now().Add(writeWait))
-		return nil
+		err := ws.wsocket.WriteControl(websocket.PongMessage, []byte(message), time.Now().Add(writeWait))
+		if err == websocket.ErrCloseSent {
+			return nil
+		}
+		if err != nil {
+			glog.Errorf("Failed to send PongMessage: %v", err)
+		}
+		return err
 	}
 	ws.wsocket.SetPingHandler(h)
 
