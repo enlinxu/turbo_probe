@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"net/url"
+	"net"
 	"sync"
 	"time"
 )
@@ -151,7 +152,10 @@ func (ws *WSconnection) SetupPingPong() {
 		err := ws.wsocket.WriteControl(websocket.PongMessage, []byte(message), time.Now().Add(writeWait))
 		if err == websocket.ErrCloseSent {
 			return nil
+		} else if e, ok := err.(net.Error); ok && e.Temporary() {
+			return nil
 		}
+
 		if err != nil {
 			glog.Errorf("Failed to send PongMessage: %v", err)
 		}
