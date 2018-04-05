@@ -117,6 +117,58 @@ func NewConnection(conf *ConnectionConfig) *WSconnection {
 	return result
 }
 
+
+func (ws *WSconnection) IsClosed() bool {
+	ws.mux.Lock()
+	defer ws.mux.Unlock()
+	return ws.closed
+}
+
+//this function is synchronized
+func (ws *WSconnection) Stop() {
+	ws.mux.Lock()
+	defer ws.mux.Unlock()
+
+	if ws.closed {
+		return
+	}
+
+	glog.V(2).Infof("Begin to stop websocket read/write pumps, and close connection.")
+	ws.closed = true
+	close(ws.stop)
+
+	if !ws.writeStart {
+		// send a close-frame before closing
+		glog.V(2).Infof("Begin to send close frame.")
+		ws.write(websocket.CloseMessage, []byte{})
+		ws.wsocket.Close()
+	}
+}
+
+func (ws *WSconnection) SetupPingPong() {
+	h := func(message string) error {
+		glog.V(3).Infof("Recevied ping msg")
+		ws.wsocket.WriteControl(websocket.PongMessage, []byte(message), time.Now().Add(writeWait))
+		return nil
+	}
+	ws.wsocket.SetPingHandler(h)
+
+	h2 := func(message string) error {
+		glog.V(3).Infof("Received pong msg")
+		return nil
+	}
+	ws.wsocket.SetPongHandler(h2)
+}
+
+func (ws *WSconnection) Start() error {
+	glog.V(2).Infof("Begin to start websocket read/write pumps.")
+	ws.SetupPingPong()
+
+	go ws.writePump()
+	go ws.readPump()
+	return nil
+}
+
 // SendRecv() should be called before Start()
 func (ws *WSconnection) SendRecv(req []byte, waitSeconds int) ([]byte, error) {
 	//1. send request
@@ -140,6 +192,32 @@ func (ws *WSconnection) SendRecv(req []byte, waitSeconds int) ([]byte, error) {
 	}
 
 	return resp, nil
+}
+
+func (ws *WSconnection) GetReceived() (chan []byte, error) {
+	if ws.IsClosed() {
+		return nil, fmt.Errorf("websocket is closed")
+	}
+
+	return ws.received, nil
+}
+
+func (ws *WSconnection) PushSend(dat []byte, timeout time.Duration) error {
+	if ws.IsClosed() {
+		glog.Errorf("Send data failed: web socket is closed.")
+		return fmt.Errorf("websocket is closed")
+	}
+
+	timer := time.NewTimer(timeout)
+	select {
+	case ws.send <- dat:
+		glog.V(3).Infof("pushed dat into sending queue")
+		return nil
+	case <-timer.C:
+		err := fmt.Errorf("timeout when pushing data into sending queue")
+		glog.Errorf(err.Error())
+		return err
+	}
 }
 
 func (ws *WSconnection) write(mtype int, payload []byte) error {
@@ -194,32 +272,6 @@ func (ws *WSconnection) writePump() {
 	}
 }
 
-func (ws *WSconnection) GetReceived() (chan []byte, error) {
-	if ws.IsClosed() {
-		return nil, fmt.Errorf("websocket is closed")
-	}
-
-	return ws.received, nil
-}
-
-func (ws *WSconnection) PushSend(dat []byte, timeout time.Duration) error {
-	if ws.IsClosed() {
-		glog.Errorf("Send data failed: web socket is closed.")
-		return fmt.Errorf("websocket is closed")
-	}
-
-	timer := time.NewTimer(timeout)
-	select {
-	case ws.send <- dat:
-		glog.V(3).Infof("pushed dat into sending queue")
-		return nil
-	case <-timer.C:
-		err := fmt.Errorf("timeout when pushing data into sending queue")
-		glog.Errorf(err.Error())
-		return err
-	}
-}
-
 func (ws *WSconnection) readPump() {
 	defer func() {
 		glog.V(2).Infof("websocket readPump stops")
@@ -250,55 +302,4 @@ func (ws *WSconnection) readPump() {
 			<-ws.received
 		}
 	}
-}
-
-func (ws *WSconnection) IsClosed() bool {
-	ws.mux.Lock()
-	defer ws.mux.Unlock()
-	return ws.closed
-}
-
-//this function is synchronized
-func (ws *WSconnection) Stop() {
-	ws.mux.Lock()
-	defer ws.mux.Unlock()
-
-	if ws.closed {
-		return
-	}
-
-	glog.V(2).Infof("Begin to stop websocket read/write pumps, and close connection.")
-	ws.closed = true
-	close(ws.stop)
-
-	if !ws.writeStart {
-		// send a close-frame before closing
-		glog.V(2).Infof("Begin to send close frame.")
-		ws.write(websocket.CloseMessage, []byte{})
-		ws.wsocket.Close()
-	}
-}
-
-func (ws *WSconnection) SetupPingPong() {
-	h := func(message string) error {
-		glog.V(3).Infof("Recevied ping msg")
-		ws.wsocket.WriteControl(websocket.PongMessage, []byte(message), time.Now().Add(writeWait))
-		return nil
-	}
-	ws.wsocket.SetPingHandler(h)
-
-	h2 := func(message string) error {
-		glog.V(3).Infof("Received pong msg")
-		return nil
-	}
-	ws.wsocket.SetPongHandler(h2)
-}
-
-func (ws *WSconnection) Start() error {
-	glog.V(2).Infof("Begin to start websocket read/write pumps.")
-	ws.SetupPingPong()
-
-	go ws.writePump()
-	go ws.readPump()
-	return nil
 }
