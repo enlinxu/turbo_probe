@@ -165,6 +165,8 @@ func (ws *WSconnection) writePump() {
 		ticker.Stop()
 		close(ws.send)
 		ws.Stop()
+
+		glog.V(2).Infof("Begin to send close frame.")
 		ws.write(websocket.CloseMessage, []byte{})
 	}()
 	ws.sendPing()
@@ -271,6 +273,7 @@ func (ws *WSconnection) Stop() {
 
 	if !ws.writeStart {
 		// send a close-frame before closing
+		glog.V(2).Infof("Begin to send close frame.")
 		ws.write(websocket.CloseMessage, []byte{})
 		ws.wsocket.Close()
 	}

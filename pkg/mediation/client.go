@@ -58,6 +58,11 @@ func (m *MediationClient) Start() error {
 		glog.V(2).Infof("Begin to serve server requests ...")
 		m.WaitServerRequests()
 
+		if m.shouldStop {
+			glog.V(1).Infof("Mediation Client is stopped.")
+			break
+		}
+
 		du := m.wsRetryDuration
 		glog.Errorf("websocket is closed. Will re-connect in %v seconds.", du.Seconds())
 		time.Sleep(du)
