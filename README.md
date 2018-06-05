@@ -1,5 +1,5 @@
 # turbo_probe
-A simplified turbo-go-sdk for testing
+A simplified [turbo-go-sdk](https://github.com/turbonomic/turbo-go-sdk) for testing
 
 # Build it
 ```console
